@@ -1,0 +1,30 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.1.10",
+    "@types/node": "^24.0.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vue": "^3.5.16",
+    "vue-router": "^4.5.1",
+    "vue-tsc": "^2.2.10"
+  }
+}
