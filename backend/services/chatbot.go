@@ -65,6 +65,21 @@ var ChatBots = map[string]*ChatBot{
 			"ejemplo":        "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
 		},
 	},
+	"bot_test": {
+		ID:          "bot_test",
+		Name:        "Tester Bot",
+		Description: "Bot para pruebas de respuestas de plantillas de mensajes",
+		Avatar:      "🤓",
+		DefaultMsg:  "No reconozco ese comando. Falta hacerlo.",
+		Responses: map[string]string{
+			"hola":           "¡Hola! Soy el bot de plantillas. Puedo ayudarte a crear y gestionar plantillas de mensajes.",
+			"ayuda":          "Comandos disponibles:\n• /nueva - Crear nueva plantilla\n• /listar - Ver plantillas\n• /usar [nombre] - Usar plantilla\n• /variables - Ver variables disponibles",
+			"nueva":          "Para crear una plantilla, usa el formato:\n/nueva [nombre] [mensaje]\n\nEjemplo: /nueva bienvenida Hola {{nombre}}, bienvenido a {{empresa}}",
+			"listar":         "Plantillas disponibles:\n1. bienvenida\n2. confirmacion_pedido\n3. recordatorio\n4. promocion\n5. seguimiento",
+			"variables":      "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
+			"ejemplo":        "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
+		},
+	},
 }
 
 // ProcessBotMessage procesa el mensaje y devuelve la respuesta del bot

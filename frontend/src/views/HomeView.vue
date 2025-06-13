@@ -117,7 +117,7 @@ const loadMessages = async (chatId: string) => {
     const data = await api.getMessages(chatId)
     messages.value = data.map(msg => ({
       ...msg,
-      timestamp: new Date(msg.created_at),
+      timestamp: new Date(msg.createdAt),
       status: 'read' as const,
       type: 'text' as const
     }))
@@ -141,7 +141,7 @@ const sendMessage = async (content: string) => {
       type: 'text' as const
     }
     
-    messages.value.push(message)
+    messages.value = [...messages.value, message]
     
     // Send via WebSocket for real-time updates
     send({
@@ -268,7 +268,7 @@ onMounted(async () => {
     }
     
     if (selectedChatId.value === data.chat_id) {
-      messages.value.push(message)
+      messages.value = [...messages.value, message]
     }
     
     // Update last message in chat list

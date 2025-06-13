@@ -78,13 +78,16 @@ const handleSendMessage = (content: string) => {
   emit('send-message', content)
 }
 
+
 // Auto-scroll to bottom when new messages arrive
 watch(() => props.messages.length, async () => {
-  await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-  }
-})
+    await nextTick()
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+  },
+  {deep: true, immediate: true}
+)
 
 // Load current user ID
 onMounted(async () => {
