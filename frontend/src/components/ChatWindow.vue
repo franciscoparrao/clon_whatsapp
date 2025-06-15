@@ -24,12 +24,21 @@
         </button>
       </div>
     </div>
+
+    
     
     <!-- Messages Area -->
     <div class="messages-container" ref="messagesContainer">
       <div v-for="message in messages" :key="message.id">
         <MessageItem :message="message" :is-own="isOwnMessage(message)" />
       </div>
+    </div>
+
+    <!-- Opciones de simulacion -->
+    <div v-if="mostrarOpcionesSimulacion" class="simulacion-opciones">
+      <p>Por favor seleccione una opción:</p>
+      <button class="btn-confirmo" @click="responderSimulacion('Confirmo')">✅ Confirmo</button>
+      <button class="btn-no" @click="responderSimulacion('No asistiré')">❌ No asistiré</button>
     </div>
     
     <!-- Message Input -->
@@ -48,6 +57,20 @@ const props = defineProps<{
   chat: Chat
   messages: Message[]
 }>()
+
+const responderSimulacion = (opcion: string) => {
+  mostrarOpcionesSimulacion.value = false
+  handleSendMessage(opcion)
+}
+
+const mostrarOpcionesSimulacion = ref(false)
+
+watch(() => props.messages, (mensajes) => {
+  const ultimo = mensajes[mensajes.length - 1]
+  if (ultimo?.content.includes('Confirmación de Asistencia')) {
+    mostrarOpcionesSimulacion.value = true
+  }
+}, { deep: true })
 
 const emit = defineEmits<{
   'send-message': [content: string]
@@ -171,5 +194,28 @@ onMounted(async () => {
   overflow-y: auto;
   background-color: #f0f2f5;
   padding: 1rem;
+}
+
+.simulacion-opciones {
+  padding: 10px;
+  background-color: #f0f4ff;
+  text-align: center;
+  border-top: 1px solid #ccc;
+}
+.btn-confirmo, .btn-no {
+  margin: 5px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.btn-confirmo {
+  background-color: #4caf50;
+  color: white;
+}
+.btn-no {
+  background-color: #f44336;
+  color: white;
 }
 </style>

@@ -15,6 +15,15 @@ type ChatBot struct {
 	DefaultMsg  string
 }
 
+//Mantener registro del flujo del usuario para la simulation
+type Session struct {
+	ID           string
+	CurrentFlow  string
+	LastQuestion string
+}
+
+var userSessions = map[string]*Session{}
+
 var ChatBots = map[string]*ChatBot{
 	"bot_support": {
 		ID:          "bot_support",
@@ -23,16 +32,16 @@ var ChatBots = map[string]*ChatBot{
 		Avatar:      "🤖",
 		DefaultMsg:  "Lo siento, no entiendo tu pregunta. ¿Podrías reformularla?",
 		Responses: map[string]string{
-			"hola":           "¡Hola! Soy el bot de soporte. ¿En qué puedo ayudarte?",
-			"ayuda":          "Puedo ayudarte con:\n• Información de productos\n• Estado de pedidos\n• Problemas técnicos\n• Preguntas frecuentes",
-			"precio":         "Los precios varían según el producto. ¿Sobre qué producto específico necesitas información?",
-			"horario":        "Nuestro horario de atención es de Lunes a Viernes de 9:00 a 18:00",
-			"contacto":       "Puedes contactarnos en:\n📧 soporte@empresa.com\n📱 +54 11 1234-5678",
-			"problema":       "Lamento que tengas problemas. ¿Podrías describir tu situación con más detalle?",
-			"gracias":        "¡De nada! Estoy aquí para ayudarte cuando lo necesites.",
-			"pedido":         "Para consultar el estado de tu pedido, por favor proporciona tu número de orden.",
-			"envio":          "Los envíos tardan entre 3-5 días hábiles. ¿Necesitas información sobre un envío específico?",
-			"devolucion":     "Las devoluciones se aceptan dentro de los 30 días. ¿Necesitas iniciar una devolución?",
+			"hola":       "¡Hola! Soy el bot de soporte. ¿En qué puedo ayudarte?",
+			"ayuda":      "Puedo ayudarte con:\n• Información de productos\n• Estado de pedidos\n• Problemas técnicos\n• Preguntas frecuentes",
+			"precio":     "Los precios varían según el producto. ¿Sobre qué producto específico necesitas información?",
+			"horario":    "Nuestro horario de atención es de Lunes a Viernes de 9:00 a 18:00",
+			"contacto":   "Puedes contactarnos en:\n📧 soporte@empresa.com\n📱 +54 11 1234-5678",
+			"problema":   "Lamento que tengas problemas. ¿Podrías describir tu situación con más detalle?",
+			"gracias":    "¡De nada! Estoy aquí para ayudarte cuando lo necesites.",
+			"pedido":     "Para consultar el estado de tu pedido, por favor proporciona tu número de orden.",
+			"envio":      "Los envíos tardan entre 3-5 días hábiles. ¿Necesitas información sobre un envío específico?",
+			"devolucion": "Las devoluciones se aceptan dentro de los 30 días. ¿Necesitas iniciar una devolución?",
 		},
 	},
 	"bot_sales": {
@@ -42,12 +51,12 @@ var ChatBots = map[string]*ChatBot{
 		Avatar:      "💼",
 		DefaultMsg:  "No tengo información sobre eso, pero puedo contarte sobre nuestras ofertas actuales.",
 		Responses: map[string]string{
-			"hola":           "¡Hola! Soy el bot de ventas. ¿Buscas algún producto en particular?",
-			"oferta":         "🎉 Ofertas de la semana:\n• 20% OFF en electrónica\n• 2x1 en productos seleccionados\n• Envío gratis en compras mayores a $5000",
-			"descuento":      "Los descuentos actuales son:\n• Primera compra: 15% OFF\n• Cliente frecuente: 10% OFF\n• Compras mayores a $10000: 25% OFF",
-			"catalogo":       "Nuestro catálogo incluye:\n📱 Electrónica\n👕 Ropa\n🏠 Hogar\n🎮 Gaming\n¿Qué categoría te interesa?",
-			"pago":           "Aceptamos:\n💳 Tarjetas de crédito/débito\n💰 Efectivo\n📱 Mercado Pago\n🏦 Transferencia bancaria",
-			"cuotas":         "¡Sí! Ofrecemos:\n• 3 cuotas sin interés\n• 6 cuotas con 10% de interés\n• 12 cuotas con 15% de interés",
+			"hola":      "¡Hola! Soy el bot de ventas. ¿Buscas algún producto en particular?",
+			"oferta":    "🎉 Ofertas de la semana:\n• 20% OFF en electrónica\n• 2x1 en productos seleccionados\n• Envío gratis en compras mayores a $5000",
+			"descuento": "Los descuentos actuales son:\n• Primera compra: 15% OFF\n• Cliente frecuente: 10% OFF\n• Compras mayores a $10000: 25% OFF",
+			"catalogo":  "Nuestro catálogo incluye:\n📱 Electrónica\n👕 Ropa\n🏠 Hogar\n🎮 Gaming\n¿Qué categoría te interesa?",
+			"pago":      "Aceptamos:\n💳 Tarjetas de crédito/débito\n💰 Efectivo\n📱 Mercado Pago\n🏦 Transferencia bancaria",
+			"cuotas":    "¡Sí! Ofrecemos:\n• 3 cuotas sin interés\n• 6 cuotas con 10% de interés\n• 12 cuotas con 15% de interés",
 		},
 	},
 	"bot_template": {
@@ -57,12 +66,12 @@ var ChatBots = map[string]*ChatBot{
 		Avatar:      "📋",
 		DefaultMsg:  "No reconozco ese comando. Escribe 'ayuda' para ver las opciones disponibles.",
 		Responses: map[string]string{
-			"hola":           "¡Hola! Soy el bot de plantillas. Puedo ayudarte a crear y gestionar plantillas de mensajes.",
-			"ayuda":          "Comandos disponibles:\n• /nueva - Crear nueva plantilla\n• /listar - Ver plantillas\n• /usar [nombre] - Usar plantilla\n• /variables - Ver variables disponibles",
-			"nueva":          "Para crear una plantilla, usa el formato:\n/nueva [nombre] [mensaje]\n\nEjemplo: /nueva bienvenida Hola {{nombre}}, bienvenido a {{empresa}}",
-			"listar":         "Plantillas disponibles:\n1. bienvenida\n2. confirmacion_pedido\n3. recordatorio\n4. promocion\n5. seguimiento",
-			"variables":      "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
-			"ejemplo":        "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
+			"hola":      "¡Hola! Soy el bot de plantillas. Puedo ayudarte a crear y gestionar plantillas de mensajes.",
+			"ayuda":     "Comandos disponibles:\n• /nueva - Crear nueva plantilla\n• /listar - Ver plantillas\n• /usar [nombre] - Usar plantilla\n• /variables - Ver variables disponibles",
+			"nueva":     "Para crear una plantilla, usa el formato:\n/nueva [nombre] [mensaje]\n\nEjemplo: /nueva bienvenida Hola {{nombre}}, bienvenido a {{empresa}}",
+			"listar":    "Plantillas disponibles:\n1. bienvenida\n2. confirmacion_pedido\n3. recordatorio\n4. promocion\n5. seguimiento",
+			"variables": "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
+			"ejemplo":   "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
 		},
 	},
 	"bot_test": {
@@ -72,15 +81,67 @@ var ChatBots = map[string]*ChatBot{
 		Avatar:      "🤓",
 		DefaultMsg:  "No reconozco ese comando. Falta hacerlo.",
 		Responses: map[string]string{
-			"hola":           "¡Hola! Soy el bot de plantillas. Puedo ayudarte a crear y gestionar plantillas de mensajes.",
-			"ayuda":          "Comandos disponibles:\n• /nueva - Crear nueva plantilla\n• /listar - Ver plantillas\n• /usar [nombre] - Usar plantilla\n• /variables - Ver variables disponibles",
-			"nueva":          "Para crear una plantilla, usa el formato:\n/nueva [nombre] [mensaje]\n\nEjemplo: /nueva bienvenida Hola {{nombre}}, bienvenido a {{empresa}}",
-			"listar":         "Plantillas disponibles:\n1. bienvenida\n2. confirmacion_pedido\n3. recordatorio\n4. promocion\n5. seguimiento",
-			"variables":      "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
-			"ejemplo":        "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
+			"hola":        "¡Hola! Soy el bot de simulacion de flujos. Simulare los flujos de fletzy!.",
+			"ayuda":       "Comandos disponibles:\n• /nueva - Crear nueva plantilla\n• /listar - Ver plantillas\n• /usar [nombre] - Usar plantilla\n• /variables - Ver variables disponibles",
+			"nueva":       "Para crear una plantilla, usa el formato:\n/nueva [nombre] [mensaje]\n\nEjemplo: /nueva bienvenida Hola {{nombre}}, bienvenido a {{empresa}}",
+			"listar":      "Plantillas disponibles:\n1. bienvenida\n2. confirmacion_pedido\n3. recordatorio\n4. promocion\n5. seguimiento",
+			"variables":   "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
+			"ejemplo":     "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
+			"simulacion1": `Confirmación de Asistencia 🎫
+					Buenos días, Javier Flores. 🧑‍⚕️ Esperamos que esté bien. Le escribimos para confirmar su asistencia a la operación programada para hoy. 
+					Por favor, responda con uno de los siguientes botones:
+
+					1. 'Confirmo' ✅ si asistirá.
+					2. 'No asistiré' ❌ en caso contrario.
+
+					Agradecemos su pronta respuesta. Que tenga un excelente día. 🚀
+
+					Powered by Fletzy`,
 		},
 	},
 }
+
+// ProcesarMensaje procesa el mensaje del usuario y devuelve la respuesta del bot
+func ProcesarMensaje(botID, userID, mensaje string) string {
+	// Obtener el bot correspondiente
+	bot, ok := ChatBots[botID]
+	if !ok {
+		return "Bot no encontrado."
+	}
+
+	// Verificar si el usuario está en una sesión activa
+	if session, exists := userSessions[userID]; exists {
+		if session.CurrentFlow == "simulacion_1" {
+			switch strings.ToLower(mensaje) {
+			case "confirmo":
+				delete(userSessions, userID)
+				return "✅ ¡Gracias por confirmar su asistencia! Lo estaremos esperando."
+			case "no asistiré", "no asistire":
+				delete(userSessions, userID)
+				return "❌ Entendido, lamentamos que no pueda asistir. Puede reprogramar su operación llamando al 800-000-000."
+			}
+		}
+	}
+
+	// Si se activó la simulación 1, registrar el flujo
+	if strings.ToLower(mensaje) == "simulacion1" {
+		userSessions[userID] = &Session{
+			ID:          userID,
+			CurrentFlow: "simulacion_1",
+		}
+		// Podrías personalizar {{nombre}} si lo deseas dinámicamente
+		return bot.Responses["simulacion1"]
+	}
+
+	// Devolver respuesta normal del bot
+	if respuesta, ok := bot.Responses[strings.ToLower(mensaje)]; ok {
+		return respuesta
+	}
+
+	return bot.DefaultMsg
+}
+
+
 
 // ProcessBotMessage procesa el mensaje y devuelve la respuesta del bot
 func ProcessBotMessage(botID, message string) string {
@@ -131,9 +192,9 @@ func GetBotResponse(botID, userMessage string, chatID string, hub interface{}) {
 			"chatId":    chatID,
 			"timestamp": time.Now().Unix(),
 		}
-		
+
 		// Broadcast to all clients
-		
+
 		// Use type assertion to call broadcast method
 		if h, ok := hub.(interface{ BroadcastToChat(string, interface{}) }); ok {
 			h.BroadcastToChat(chatID, messageData)
