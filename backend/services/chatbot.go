@@ -15,14 +15,15 @@ type ChatBot struct {
 	DefaultMsg  string
 }
 
-//Mantener registro del flujo del usuario para la simulation
+//Mantener registro del flujo del usuario para la simulacion
 type Session struct {
 	ID           string
-	CurrentFlow  string
-	LastQuestion string
+	CurrentFlow  string //Donde esta
+	LastQuestion string //Que se le pregunto?
+	PendingInput string //Si tiene que responder algo
 }
 
-var userSessions = map[string]*Session{}
+var botSessions = map[string]*Session{}
 
 var ChatBots = map[string]*ChatBot{
 	"bot_support": {
@@ -88,59 +89,18 @@ var ChatBots = map[string]*ChatBot{
 			"variables":   "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
 			"ejemplo":     "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
 			"simulacion1": `Confirmación de Asistencia 🎫
-					Buenos días, Javier Flores. 🧑‍⚕️ Esperamos que esté bien. Le escribimos para confirmar su asistencia a la operación programada para hoy. 
-					Por favor, responda con uno de los siguientes botones:
+					Buenos días, {{Nombre}} {{Apellido}}. 🧑‍⚕️ Esperamos que esté bien. Le escribimos para confirmar su asistencia a la operación programada para hoy. 
+					Por favor, responda con uno de los siguientes botones:\n
 
 					1. 'Confirmo' ✅ si asistirá.
-					2. 'No asistiré' ❌ en caso contrario.
+					2. 'No asistiré' ❌ en caso contrario.\n
 
-					Agradecemos su pronta respuesta. Que tenga un excelente día. 🚀
+					Agradecemos su pronta respuesta. Que tenga un excelente día. 🚀\n
 
 					Powered by Fletzy`,
 		},
 	},
 }
-
-// ProcesarMensaje procesa el mensaje del usuario y devuelve la respuesta del bot
-func ProcesarMensaje(botID, userID, mensaje string) string {
-	// Obtener el bot correspondiente
-	bot, ok := ChatBots[botID]
-	if !ok {
-		return "Bot no encontrado."
-	}
-
-	// Verificar si el usuario está en una sesión activa
-	if session, exists := userSessions[userID]; exists {
-		if session.CurrentFlow == "simulacion_1" {
-			switch strings.ToLower(mensaje) {
-			case "confirmo":
-				delete(userSessions, userID)
-				return "✅ ¡Gracias por confirmar su asistencia! Lo estaremos esperando."
-			case "no asistiré", "no asistire":
-				delete(userSessions, userID)
-				return "❌ Entendido, lamentamos que no pueda asistir. Puede reprogramar su operación llamando al 800-000-000."
-			}
-		}
-	}
-
-	// Si se activó la simulación 1, registrar el flujo
-	if strings.ToLower(mensaje) == "simulacion1" {
-		userSessions[userID] = &Session{
-			ID:          userID,
-			CurrentFlow: "simulacion_1",
-		}
-		// Podrías personalizar {{nombre}} si lo deseas dinámicamente
-		return bot.Responses["simulacion1"]
-	}
-
-	// Devolver respuesta normal del bot
-	if respuesta, ok := bot.Responses[strings.ToLower(mensaje)]; ok {
-		return respuesta
-	}
-
-	return bot.DefaultMsg
-}
-
 
 
 // ProcessBotMessage procesa el mensaje y devuelve la respuesta del bot
@@ -150,16 +110,52 @@ func ProcessBotMessage(botID, message string) string {
 		return "Bot no encontrado"
 	}
 
+	session := botSessions[botID]
+	
+	// Paso: esperando hora tras confirmación
+	if session != nil && session.CurrentFlow == "simulacion_1" {
+		//fmt.Printf("DEBUG: sesión encontrada para %s: %+v\n", botID, session)
+		//fmt.Println("Procesando mensaje en flujo de simulación 1 para el bot:", botID)
+		if session.PendingInput == "hora_asistencia" {
+			//fmt.Printf("Recibiendo hora: %s | Sesión actual: %+v\n", message, session)
+			botSessions[botID] = nil // resetear sesión
+			return fmt.Sprintf("🕒 Gracias. Registramos su hora de asistencia: %s. ¡Nos vemos pronto!", message)
+		}
+
+		switch strings.ToLower(message) {
+		case "confirmo":
+			session.PendingInput = "hora_asistencia"
+			//fmt.Println("Se detectó CONFIRMO. Pendiente de hora.")
+			//fmt.Println("DEBUG: sesión actualizada para", botID, "con PendingInput:", session.PendingInput)
+			return "✅ ¡Gracias por confirmar! Por favor, indique la hora a la que asistirá (formato HH:MM)."
+		case "no asistiré", "no asistire":
+			fmt.Println("Se detectó NO ASISTIRE. Se borra la sesión.")
+			botSessions[botID] = nil
+			return "❌ Entendido, lamentamos que no pueda asistir. Puede reprogramar su operación llamando al 800-000-000."
+		}
+	}
+
+	// Activar simulación 1
+	if strings.ToLower(message) == "simulacion1" {
+		//fmt.Println("Iniciando simulación 1 para el bot:", botID)
+		botSessions[botID] = &Session{
+			ID:          botID, // ya que ahora solo usamos uno por bot
+			CurrentFlow: "simulacion_1",
+		}
+		//fmt.Printf("DEBUG: sesión creada para %s: %+v\n", botID, botSessions[botID])
+		//fmt.Println("flow" + botSessions[botID].CurrentFlow)
+		return bot.Responses["simulacion1"]
+	}
 	// Convertir mensaje a minúsculas para comparación
 	lowerMessage := strings.ToLower(message)
-
+	
 	// Buscar coincidencias en las respuestas
 	for keyword, response := range bot.Responses {
 		if strings.Contains(lowerMessage, keyword) {
 			return response
 		}
 	}
-
+	
 	// Si no hay coincidencia, devolver mensaje por defecto
 	return bot.DefaultMsg
 }
