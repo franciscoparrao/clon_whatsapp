@@ -38,7 +38,7 @@
     <div v-if="mostrarOpcionesSimulacion" class="simulacion-opciones">
       <p>Por favor seleccione una opción:</p>
       <button class="btn-confirmo" @click="responderSimulacion('Confirmo')">✅ Confirmo</button>
-      <button class="btn-no" @click="responderSimulacion('No asistiré')">❌ No asistiré</button>
+      <button class="btn-no" @click="responderSimulacion('No asistire')">❌ No asistiré</button>
     </div>
     
     <!-- Message Input -->
@@ -190,6 +190,7 @@ onMounted(async () => {
 }
 
 .messages-container {
+  white-space: pre-line;
   flex: 1;
   overflow-y: auto;
   background-color: #f0f2f5;

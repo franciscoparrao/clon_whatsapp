@@ -89,15 +89,27 @@ var ChatBots = map[string]*ChatBot{
 			"variables":   "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
 			"ejemplo":     "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
 			"simulacion1": `Confirmación de Asistencia 🎫
+			
 					Buenos días, {{Nombre}} {{Apellido}}. 🧑‍⚕️ Esperamos que esté bien. Le escribimos para confirmar su asistencia a la operación programada para hoy. 
-					Por favor, responda con uno de los siguientes botones:\n
+					Por favor, responda con uno de los siguientes botones:
 
 					1. 'Confirmo' ✅ si asistirá.
-					2. 'No asistiré' ❌ en caso contrario.\n
+					2. 'No asistiré' ❌ en caso contrario.
 
-					Agradecemos su pronta respuesta. Que tenga un excelente día. 🚀\n
+					Agradecemos su pronta respuesta. Que tenga un excelente día. 🚀
 
 					Powered by Fletzy`,
+		},
+	},
+	"bot_pedido": {
+		ID:          "bot_pedido",
+		Name:        "Pedido Bot",
+		Description: "Bot para simulacion de pedidos",
+		Avatar:      "😼",
+		DefaultMsg:  "No reconozco ese comando.",
+		Responses: map[string]string{
+			"hola":      "¡Hola! Soy el bot de pedidos. Puedo ayudarte a simular los pedidos de un cliente.",
+			"pedido1":    "Hola, quiero comprar 7 yogures, con 8 panes y 200 gramos de queso chanco del jumbo de Plaza Maipu.",
 		},
 	},
 }
