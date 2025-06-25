@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"runtime"
 	"time"
+	"whatsapp-clone/database"
 
 	"github.com/gin-gonic/gin"
 )
@@ -146,8 +147,10 @@ func (h *HealthHandler) checkServices() map[string]string {
 }
 
 func (h *HealthHandler) checkDatabase() string {
-	// TODO: Implement actual database health check
-	// Example: ping the database connection
+	// Verificar conexión a la base de datos
+	if err := database.HealthCheck(); err != nil {
+		return "down"
+	}
 	return "up"
 }
 

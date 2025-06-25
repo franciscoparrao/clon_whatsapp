@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"whatsapp-clone/config"
+	"whatsapp-clone/database"
 	"whatsapp-clone/handlers"
 	"whatsapp-clone/middleware"
 
@@ -13,6 +14,26 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
+	
+	// Conectar a la base de datos
+	dbConfig := database.Config{
+		Host:     cfg.DBHost,
+		Port:     cfg.DBPort,
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
+		SSLMode:  cfg.DBSSLMode,
+	}
+	
+	if err := database.Connect(dbConfig); err != nil {
+		log.Fatal("Error conectando a la base de datos:", err)
+	}
+	defer database.Close()
+	
+	// Inicializar schema si es necesario
+	if err := database.InitializeSchema(); err != nil {
+		log.Printf("Error inicializando schema: %v", err)
+	}
 	
 	router := gin.Default()
 
@@ -51,6 +72,9 @@ func main() {
 		})).ServeHTTP(c.Writer, c.Request)
 	})
 
+	// Inicializar handlers
+	gigWorkerHandler := handlers.NewGigWorkerHandler()
+	
 	api := router.Group("/api")
 	{
 		api.GET("/health", handlers.HealthCheck)
@@ -66,6 +90,32 @@ func main() {
 			protected.POST("/chats", handlers.CreateChat)
 			protected.GET("/chats/:id/messages", handlers.GetMessages)
 			protected.POST("/chats/:id/messages", handlers.SendMessage)
+			
+			// Rutas de Gig Workers
+			protected.POST("/workers/register", gigWorkerHandler.RegisterAsGigWorker)
+			protected.GET("/workers/profile", gigWorkerHandler.GetMyWorkerProfile)
+			protected.GET("/workers/:id", gigWorkerHandler.GetWorkerProfile)
+			
+			// Disponibilidad
+			protected.POST("/workers/availability", gigWorkerHandler.UpdateAvailability)
+			protected.PUT("/workers/availability/:id/confirm", gigWorkerHandler.ConfirmAvailability)
+			protected.GET("/workers/availability", gigWorkerHandler.GetMyAvailability)
+			
+			// Tareas
+			protected.GET("/tasks", gigWorkerHandler.GetAvailableTasks)
+			protected.POST("/tasks", gigWorkerHandler.CreateTask) // Para admins
+			protected.POST("/tasks/:id/accept", gigWorkerHandler.AcceptTask)
+			protected.PUT("/assignments/:id/start", gigWorkerHandler.StartTask)
+			protected.PUT("/assignments/:id/complete", gigWorkerHandler.CompleteTask)
+			protected.GET("/workers/assignments", gigWorkerHandler.GetMyAssignments)
+			
+			// Historial y estadísticas
+			protected.GET("/workers/attendance", gigWorkerHandler.GetAttendanceHistory)
+			protected.POST("/workers/attendance", gigWorkerHandler.RecordAttendance) // Para admins
+			
+			// Notificaciones
+			protected.GET("/notifications", gigWorkerHandler.GetNotifications)
+			protected.PUT("/notifications/:id/read", gigWorkerHandler.MarkNotificationAsRead)
 		}
 	}
 

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
+import GigWorkerDashboard from '@/components/GigWorkerDashboard.vue'
 import { api } from '@/services/api'
 
 const routes: RouteRecordRaw[] = [
@@ -21,6 +22,12 @@ const routes: RouteRecordRaw[] = [
     path: '/chat/:id',
     name: 'chat',
     component: HomeView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/gig-worker',
+    name: 'gig-worker',
+    component: GigWorkerDashboard,
     meta: { requiresAuth: true }
   }
 ]
