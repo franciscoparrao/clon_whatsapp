@@ -103,7 +103,7 @@ echo ""
 echo "📈 Estadísticas:"
 
 # Contar registros en tablas principales
-for table in users gig_workers tasks notifications; do
+for table in users messages chats gig_workers tasks notifications; do
     COUNT=$($PSQL_CMD -d $DB_NAME -tc "SELECT COUNT(*) FROM $table;" 2>/dev/null | tr -d ' ')
     if [ $? -eq 0 ]; then
         printf "   %-20s %s registros\n" "$table:" "$COUNT"

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -85,9 +84,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	// Create new user
-	userID := fmt.Sprintf("user_%d", time.Now().UnixNano())
 	newUser := &services.User{
-		ID:       userID,
+		ID:       "", // Let the store generate the UUID
 		Username: req.Username,
 		Email:    req.Email,
 		Name:     req.Name,
@@ -97,15 +95,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	// Save user to store
 	if err := services.Store.CreateUser(newUser); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		// Log the actual error for debugging
+		c.Writer.Header().Set("X-Debug-Error", err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user", "details": err.Error()})
 		return
 	}
 
 	// Create initial chats with bots
-	services.InitializeBotChats(userID)
+	services.InitializeBotChats(newUser.ID)
 
 	// Generate JWT token
-	token, expiresAt, err := h.generateToken(userID, req.Username, req.Email)
+	token, expiresAt, err := h.generateToken(newUser.ID, req.Username, req.Email)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -113,7 +113,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	response := AuthResponse{
 		Token:     token,
-		UserID:    userID,
+		UserID:    newUser.ID,
 		Username:  req.Username,
 		Name:      req.Name,
 		Email:     req.Email,

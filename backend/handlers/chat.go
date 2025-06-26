@@ -361,16 +361,40 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 
 	err = services.Store.CreateMessage(message)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to save message"})
+		// Log the actual error for debugging
+		c.Writer.Header().Set("X-Debug-Error", err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to save message", "details": err.Error()})
 		return
 	}
 
 	// Check if any participant is a bot and generate response
 	for _, participantID := range chat.Participants {
 		if participantID != userID {
-			if _, isBot := services.ChatBots[participantID]; isBot {
-				// Generate bot response asynchronously
-				go services.GetBotResponse(participantID, req.Content, chatID, h.hub)
+			// Check if participant is a bot by checking their email
+			participantUser, _ := services.Store.GetUser(participantID)
+			if participantUser != nil {
+				// Check if this is a bot email
+				isBotEmail := participantUser.Email == "support@whatsapp-clone.com" ||
+					participantUser.Email == "sales@whatsapp-clone.com" ||
+					participantUser.Email == "template@whatsapp-clone.com"
+				
+				if isBotEmail {
+					// Map email to bot ID for processing
+					var botID string
+					switch participantUser.Email {
+					case "support@whatsapp-clone.com":
+						botID = "bot_support"
+					case "sales@whatsapp-clone.com":
+						botID = "bot_sales"
+					case "template@whatsapp-clone.com":
+						botID = "bot_template"
+					}
+					
+					if botID != "" {
+						// Generate bot response asynchronously
+						go services.GetBotResponse(botID, req.Content, chatID, h.hub)
+					}
+				}
 			}
 		}
 	}
@@ -455,7 +479,7 @@ func (h *ChatHandler) GetUsers(c *gin.Context) {
 	currentUserID := c.GetString("userID")
 
 	// Get all users from store
-	users, err := services.Store.GetAllUsers()
+	users, err := services.Store.GetUsers()
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
 		return
@@ -485,5 +509,5 @@ func (h *ChatHandler) GetUsers(c *gin.Context) {
 }
 
 func generateMessageID() string {
-	return "msg_" + uuid.New().String()
+	return uuid.New().String()
 }

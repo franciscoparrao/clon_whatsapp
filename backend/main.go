@@ -7,6 +7,7 @@ import (
 	"whatsapp-clone/database"
 	"whatsapp-clone/handlers"
 	"whatsapp-clone/middleware"
+	"whatsapp-clone/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
@@ -34,6 +35,9 @@ func main() {
 	if err := database.InitializeSchema(); err != nil {
 		log.Printf("Error inicializando schema: %v", err)
 	}
+	
+	// Inicializar el store (PostgreSQL o memoria)
+	services.InitializeStore()
 	
 	router := gin.Default()
 

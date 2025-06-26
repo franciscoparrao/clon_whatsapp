@@ -175,7 +175,7 @@ class ApiService {
   }
 
   async getCurrentUser(): Promise<User> {
-    return this.request<User>('/auth/me')
+    return this.request<User>('/user')
   }
 }
 

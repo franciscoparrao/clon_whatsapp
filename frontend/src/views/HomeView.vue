@@ -154,6 +154,13 @@ const sendMessage = async (content: string) => {
       chatId: selectedChatId.value,
       content: content.trim()
     })
+    
+    // Reload messages after a delay to get bot responses
+    setTimeout(async () => {
+      if (selectedChatId.value) {
+        await loadMessages(selectedChatId.value)
+      }
+    }, 1500)
   } catch (error) {
     console.error('Failed to send message:', error)
   }

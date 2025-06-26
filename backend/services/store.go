@@ -38,11 +38,12 @@ type MemoryStore struct {
 	mu       sync.RWMutex
 }
 
-var Store = &MemoryStore{
-	users:    make(map[string]*User),
-	chats:    make(map[string]*Chat),
-	messages: make(map[string][]*Message),
-}
+// Store se inicializa en store_init.go
+// var Store = &MemoryStore{
+// 	users:    make(map[string]*User),
+// 	chats:    make(map[string]*Chat),
+// 	messages: make(map[string][]*Message),
+// }
 
 // User methods
 func (s *MemoryStore) CreateUser(user *User) error {
@@ -77,6 +78,17 @@ func (s *MemoryStore) GetUserByUsername(username string) (*User, error) {
 	return nil, nil
 }
 
+func (s *MemoryStore) GetUserByID(id string) (*User, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	
+	user, exists := s.users[id]
+	if !exists {
+		return nil, nil
+	}
+	return user, nil
+}
+
 func (s *MemoryStore) GetUser(id string) (*User, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -88,7 +100,7 @@ func (s *MemoryStore) GetUser(id string) (*User, error) {
 	return user, nil
 }
 
-func (s *MemoryStore) GetAllUsers() ([]*User, error) {
+func (s *MemoryStore) GetUsers() ([]*User, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	
@@ -193,4 +205,21 @@ func (s *MemoryStore) FindOrCreateDirectChat(user1ID, user2ID string) (*Chat, er
 	}
 	s.chats[chat.ID] = chat
 	return chat, nil
+}
+
+func (s *MemoryStore) IsUserInChat(userID, chatID string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	
+	chat, exists := s.chats[chatID]
+	if !exists {
+		return false
+	}
+	
+	for _, participant := range chat.Participants {
+		if participant == userID {
+			return true
+		}
+	}
+	return false
 }

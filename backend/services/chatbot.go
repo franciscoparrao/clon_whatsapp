@@ -96,17 +96,36 @@ func GetBotResponse(botID, userMessage string, chatID string, hub interface{}) {
 	// Obtener respuesta del bot
 	response := ProcessBotMessage(botID, userMessage)
 
+	// Obtener el usuario bot real por su email
+	var botUser *User
+	switch botID {
+	case "bot_support":
+		botUser, _ = Store.GetUserByEmail("support@whatsapp-clone.com")
+	case "bot_sales":
+		botUser, _ = Store.GetUserByEmail("sales@whatsapp-clone.com")
+	case "bot_template":
+		botUser, _ = Store.GetUserByEmail("template@whatsapp-clone.com")
+	}
+
+	if botUser == nil {
+		fmt.Printf("Bot user not found for botID: %s\n", botID)
+		return
+	}
+
 	// Crear mensaje de respuesta
 	botMessage := &Message{
-		ID:        fmt.Sprintf("msg_%d", time.Now().UnixNano()),
+		ID:        "", // Let the store generate the UUID
 		ChatID:    chatID,
-		SenderID:  botID,
+		SenderID:  botUser.ID, // Use the real bot user ID
 		Content:   response,
 		CreatedAt: time.Now(),
 	}
 
 	// Guardar mensaje en el store
-	Store.CreateMessage(botMessage)
+	if err := Store.CreateMessage(botMessage); err != nil {
+		fmt.Printf("Error creating bot message: %v\n", err)
+		return
+	}
 
 	// Enviar mensaje a través del WebSocket
 	if hub != nil {
@@ -129,34 +148,53 @@ func GetBotResponse(botID, userMessage string, chatID string, hub interface{}) {
 // InitializeBotChats crea chats iniciales con los bots para cada usuario
 func InitializeBotChats(userID string) {
 	fmt.Printf("Initializing bot chats for user: %s\n", userID)
-	for _, bot := range ChatBots {
-		// Crear usuario bot si no existe
-		botUser := &User{
-			ID:        bot.ID,
-			Username:  bot.ID,
-			Email:     bot.ID + "@bot.local",
-			Name:      bot.Name,
-			CreatedAt: time.Now(),
+	
+	// Bot emails que queremos buscar
+	botEmails := []string{
+		"support@whatsapp-clone.com",
+		"sales@whatsapp-clone.com",
+		"template@whatsapp-clone.com",
+	}
+	
+	for _, email := range botEmails {
+		// Buscar el bot por email
+		botUser, err := Store.GetUserByEmail(email)
+		if err != nil || botUser == nil {
+			fmt.Printf("Bot user not found for email: %s\n", email)
+			continue
 		}
-		Store.CreateUser(botUser)
-		fmt.Printf("Created bot user: %s\n", bot.Name)
+		
+		fmt.Printf("Found bot user: %s (ID: %s)\n", botUser.Name, botUser.ID)
 
-		// Crear chat con el bot
-		chat := &Chat{
-			ID:           fmt.Sprintf("chat_%s_%s", userID, bot.ID),
-			Name:         bot.Name,
-			Participants: []string{userID, bot.ID},
-			CreatedAt:    time.Now(),
+		// Crear chat con el bot usando FindOrCreateDirectChat
+		chat, err := Store.FindOrCreateDirectChat(userID, botUser.ID)
+		if err != nil {
+			fmt.Printf("Error creating chat with bot %s: %v\n", botUser.Name, err)
+			continue
 		}
-		Store.CreateChat(chat)
-		fmt.Printf("Created chat with bot: %s (ID: %s)\n", bot.Name, chat.ID)
+		
+		fmt.Printf("Created chat with bot: %s (ID: %s)\n", botUser.Name, chat.ID)
 
 		// Mensaje de bienvenida del bot
+		// Buscar el bot config por el username del bot
+		var botConfig *ChatBot
+		for _, b := range ChatBots {
+			if b.Name == botUser.Name {
+				botConfig = b
+				break
+			}
+		}
+		
+		welcomeContent := "¡Hola! Soy " + botUser.Name + ". ¿En qué puedo ayudarte?"
+		if botConfig != nil && botConfig.Responses["hola"] != "" {
+			welcomeContent = botConfig.Responses["hola"]
+		}
+		
 		welcomeMsg := &Message{
-			ID:        fmt.Sprintf("msg_%d", time.Now().UnixNano()),
+			ID:        "", // Let the store generate the UUID
 			ChatID:    chat.ID,
-			SenderID:  bot.ID,
-			Content:   bot.Responses["hola"],
+			SenderID:  botUser.ID,
+			Content:   welcomeContent,
 			CreatedAt: time.Now(),
 		}
 		Store.CreateMessage(welcomeMsg)
