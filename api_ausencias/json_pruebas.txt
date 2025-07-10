@@ -1,0 +1,7 @@
+http://localhost:5000/api/user/schedule/worker_001
+{
+  "dias_laborales": ["lunes", "martes", "miercoles", "jueves", "viernes"],
+  "hora_inicio": "08:00:00",
+  "hora_fin": "17:00:00"
+}
+

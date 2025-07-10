@@ -15,7 +15,7 @@ type ChatBot struct {
 	DefaultMsg  string
 }
 
-//Mantener registro del flujo del usuario para la simulacion
+// Mantener registro del flujo del usuario para la simulacion
 type Session struct {
 	ID           string
 	CurrentFlow  string //Donde esta
@@ -82,23 +82,21 @@ var ChatBots = map[string]*ChatBot{
 		Avatar:      "🤓",
 		DefaultMsg:  "No reconozco ese comando. Falta hacerlo.",
 		Responses: map[string]string{
-			"hola":        "¡Hola! Soy el bot de simulacion de flujos. Simulare los flujos de fletzy!.",
-			"ayuda":       "Comandos disponibles:\n• /nueva - Crear nueva plantilla\n• /listar - Ver plantillas\n• /usar [nombre] - Usar plantilla\n• /variables - Ver variables disponibles",
-			"nueva":       "Para crear una plantilla, usa el formato:\n/nueva [nombre] [mensaje]\n\nEjemplo: /nueva bienvenida Hola {{nombre}}, bienvenido a {{empresa}}",
-			"listar":      "Plantillas disponibles:\n1. bienvenida\n2. confirmacion_pedido\n3. recordatorio\n4. promocion\n5. seguimiento",
-			"variables":   "Variables disponibles:\n• {{nombre}} - Nombre del cliente\n• {{empresa}} - Nombre de la empresa\n• {{fecha}} - Fecha actual\n• {{pedido}} - Número de pedido\n• {{producto}} - Nombre del producto",
-			"ejemplo":     "Ejemplo de plantilla:\n\nHola {{nombre}},\n\nTu pedido #{{pedido}} ha sido confirmado.\nFecha de entrega estimada: {{fecha}}\n\nGracias por tu compra!",
+			"hola":  "¡Hola! Soy el bot de simulacion de flujos. Simulare los flujos de fletzy!.",
+			"ayuda": "Comandos disponibles:\n• simulacion1 - Flujo de confirmación de asistencia\n• simulacion asignacion - Flujo de asignación de tareas",
 			"simulacion1": `Confirmación de Asistencia 🎫
-			
-					Buenos días, {{Nombre}} {{Apellido}}. 🧑‍⚕️ Esperamos que esté bien. Le escribimos para confirmar su asistencia a la operación programada para hoy. 
-					Por favor, responda con uno de los siguientes botones:
 
-					1. 'Confirmo' ✅ si asistirá.
-					2. 'No asistiré' ❌ en caso contrario.
+Buenos días, {{Nombre}} {{Apellido}}. 🧑‍⚕️ Esperamos que esté bien. Le escribimos para confirmar su asistencia a la operación programada para hoy.
+Por favor, responda con:
+1. "confirmo" ✅ si asistirá.
+2. "no asistiré" ❌ en caso contrario.
 
-					Agradecemos su pronta respuesta. Que tenga un excelente día. 🚀
+¡Gracias!
 
-					Powered by Fletzy`,
+Powered by Fletzy`,
+			"simulacion asignacion": "🔔 ¡Nuevo trabajo disponible!\nAcaba de abrirse un nuevo trabajo, ¿deseas tomarlo?\n• Escribe \"acepto 1\" para asignártelo.",
+			"acepto 1":              "✅ ¡Tarea asignada! Ahora eres responsable de este trabajo.",
+			"acepto 2":              "⚠️ Lo siento, la tarea ya ha sido asignada a otra persona.",
 		},
 	},
 	"bot_pedido": {
@@ -108,12 +106,11 @@ var ChatBots = map[string]*ChatBot{
 		Avatar:      "😼",
 		DefaultMsg:  "No reconozco ese comando.",
 		Responses: map[string]string{
-			"hola":      "¡Hola! Soy el bot de pedidos. Puedo ayudarte a simular los pedidos de un cliente.",
-			"pedido1":    "Hola, quiero comprar 7 yogures, con 8 panes y 200 gramos de queso chanco del jumbo de Plaza Maipu.",
+			"hola":    "¡Hola! Soy el bot de pedidos. Puedo ayudarte a simular los pedidos de un cliente.",
+			"pedido1": "Hola, quiero comprar 7 yogures, con 8 panes y 200 gramos de queso chanco del jumbo de Plaza Maipu.",
 		},
 	},
 }
-
 
 // ProcessBotMessage procesa el mensaje y devuelve la respuesta del bot
 func ProcessBotMessage(botID, message string) string {
@@ -123,7 +120,7 @@ func ProcessBotMessage(botID, message string) string {
 	}
 
 	session := botSessions[botID]
-	
+
 	// Paso: esperando hora tras confirmación
 	if session != nil && session.CurrentFlow == "simulacion_1" {
 		//fmt.Printf("DEBUG: sesión encontrada para %s: %+v\n", botID, session)
@@ -141,9 +138,8 @@ func ProcessBotMessage(botID, message string) string {
 			//fmt.Println("DEBUG: sesión actualizada para", botID, "con PendingInput:", session.PendingInput)
 			return "✅ ¡Gracias por confirmar! Por favor, indique la hora a la que asistirá (formato HH:MM)."
 		case "no asistiré", "no asistire":
-			fmt.Println("Se detectó NO ASISTIRE. Se borra la sesión.")
 			botSessions[botID] = nil
-			return "❌ Entendido, lamentamos que no pueda asistir. Puede reprogramar su operación llamando al 800-000-000."
+			return "❌ Entendido, lamentamos que no pueda asistir."
 		}
 	}
 
@@ -160,14 +156,14 @@ func ProcessBotMessage(botID, message string) string {
 	}
 	// Convertir mensaje a minúsculas para comparación
 	lowerMessage := strings.ToLower(message)
-	
+
 	// Buscar coincidencias en las respuestas
 	for keyword, response := range bot.Responses {
 		if strings.Contains(lowerMessage, keyword) {
 			return response
 		}
 	}
-	
+
 	// Si no hay coincidencia, devolver mensaje por defecto
 	return bot.DefaultMsg
 }

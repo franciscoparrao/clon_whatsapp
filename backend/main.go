@@ -7,13 +7,13 @@ import (
 	"whatsapp-clone/handlers"
 	"whatsapp-clone/middleware"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	cfg := config.LoadConfig()
-	
+
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
@@ -32,19 +32,19 @@ func main() {
 	router.Use(func(c *gin.Context) {
 		// Log incoming request for debugging
 		log.Printf("Request: %s %s from %s", c.Request.Method, c.Request.URL.Path, c.Request.Header.Get("Origin"))
-		
+
 		// Handle ngrok headers
 		if c.Request.Header.Get("X-Forwarded-Proto") != "" {
 			c.Request.URL.Scheme = c.Request.Header.Get("X-Forwarded-Proto")
 		}
-		
+
 		c.Next()
 	})
-	
+
 	// Create logger middleware
 	logger := log.New(log.Writer(), "[WHATSAPP] ", log.LstdFlags)
 	loggerMiddleware := middleware.NewLoggerMiddleware(logger, middleware.INFO)
-	
+
 	router.Use(func(c *gin.Context) {
 		loggerMiddleware.Log(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c.Next()
@@ -56,7 +56,9 @@ func main() {
 		api.GET("/health", handlers.HealthCheck)
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", handlers.Login)
-		
+		api.POST("/user/schedule/:worker_id", handlers.ScheduleHandler)
+		api.GET("/task/:worker_id", handlers.TaskHandler)
+
 		protected := api.Group("/")
 		protected.Use(middleware.GinAuthMiddleware(cfg.JWTSecret))
 		{
